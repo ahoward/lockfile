@@ -7,7 +7,7 @@
 #
 # http://raa.ruby-lang.org/project/lockfile/
 #
-  require 'lockfile-1.4.3'
+  require 'lockfile'
 
   class Main
 #--{{{
@@ -49,7 +49,7 @@
    failure => $? != 0
 
   AUTHOR
-   ara.t.howard@noaa.gov
+   ara.t.howard@gmail.com
 
   BUGS
     1 < bugno && bugno < 42

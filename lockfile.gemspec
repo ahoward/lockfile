@@ -1,5 +1,5 @@
 
-lib, version = File::basename(File::dirname(File::expand_path(__FILE__))).split %r/-/, 2
+lib, version = $lib, $version
 
 require 'rubygems'
 
@@ -14,7 +14,6 @@ Gem::Specification::new do |spec|
   spec.executables = Dir::glob("bin/*").map{|exe| File::basename exe}
   
   spec.require_path = "lib" 
-  spec.autorequire = lib
 
   spec.has_rdoc = File::exist? "doc" 
   spec.test_suite_file = "test/#{ lib }.rb" if File::directory? "test"
@@ -22,6 +21,22 @@ Gem::Specification::new do |spec|
   spec.extensions << "extconf.rb" if File::exists? "extconf.rb"
 
   spec.author = "Ara T. Howard"
-  spec.email = "ara.t.howard@noaa.gov"
+  spec.email = "ara.t.howard@gmail.com"
   spec.homepage = "http://codeforpeople.com/lib/ruby/#{ lib }/"
+  spec.rubyforge_project = 'codeforpeople'
 end
+
+
+BEGIN {
+  $lib = 'lockfile'
+
+  $version = Dir.chdir(File.dirname(__FILE__)) do 
+    begin
+      $LOAD_PATH.unshift './lib'
+      require($lib)
+      Lockfile.version
+    ensure
+      $LOAD_PATH.shift
+    end
+  end
+}

@@ -7,7 +7,8 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
   class Lockfile
 
     VERSION = '1.4.3'
-    def version() VERSION end
+    def Lockfile.version() Lockfile::VERSION end
+    def version() Lockfile::VERSION end
 
     class LockError < StandardError; end
     class StolenLockError < LockError; end

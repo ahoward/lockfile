@@ -5,7 +5,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
   require 'fileutils'
 
   class Lockfile
-#--{{{
+
     VERSION = '1.4.3'
     def version() VERSION end
 
@@ -19,13 +19,13 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     class UnLockError < LockError; end
 
     class SleepCycle < Array
-#--{{{    
+
       attr :min
       attr :max
       attr :range
       attr :inc
       def initialize min, max, inc
-#--{{{
+
         @min, @max, @inc = Float(min), Float(max), Float(inc)
         @range = @max - @min
         raise RangeError, "max(#{ @max }) <= min(#{ @min })" if @max <= @min
@@ -36,21 +36,21 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         push(s) and s += @inc while(s <= @max)
         self[-1] = @max if self[-1] < @max
         reset
-#--}}}
+
       end
       def next
-#--{{{
+
         ret = self[@idx]
         @idx = ((@idx + 1) % self.size)
         ret
-#--}}}
+
       end
       def reset
-#--{{{
+
         @idx = 0
-#--}}}
+
       end
-#--}}}      
+
     end
 
     HOSTNAME = Socket::gethostname
@@ -72,7 +72,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     DEFAULT_DEBUG = ENV['LOCKFILE_DEBUG'] || false
 
     class << self
-#--{{{
+
       attr :retries, true
       attr :max_age, true
       attr :sleep_inc, true
@@ -89,7 +89,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       attr :dont_use_lock_id, true
 
       def init
-#--{{{
+
         @retries          = DEFAULT_RETRIES
         @max_age          = DEFAULT_MAX_AGE
         @sleep_inc        = DEFAULT_SLEEP_INC
@@ -108,9 +108,9 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
         STDOUT.sync = true if @debug
         STDERR.sync = true if @debug
-#--}}}
+
       end
-#--}}}
+
     end
     self.init
 
@@ -143,7 +143,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     alias debug? debug
 
     def self::create(path, *a, &b)
-#--{{{
+
       opts = {
         'retries' => 0,
         'min_sleep' => 0,
@@ -164,11 +164,11 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         raise Errno::EEXIST, path
       end
       open(path, *a, &b)
-#--}}}
+
     end
 
     def initialize(path, opts = {}, &block)
-#--{{{
+
       @klass = self.class
       @path  = path
       @opts  = opts
@@ -197,10 +197,10 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       @locked   = false
 
       lock(&block) if block
-#--}}}
+
     end
     def lock
-#--{{{
+
       raise StackingLockError, "<#{ @path }> is locked!" if @locked
 
       sweep unless @dont_sweep
@@ -303,7 +303,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       end
 
       return ret
-#--}}}
+
     end
     def sweep
 #----{{{
@@ -356,7 +356,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 #----}}}
     end
     def unlock
-#--{{{
+
       raise UnLockError, "<#{ @path }> is not locked!" unless @locked
       begin
         File::unlink @path
@@ -367,10 +367,10 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         @locked = false
         ObjectSpace.undefine_finalizer self if @clean
       end
-#--}}}
+
     end
     def new_refresher
-#--{{{
+
       Thread::new(Thread::current, @path, @refresh, @dont_use_lock_id) do |thread, path, refresh, dont_use_lock_id|
         loop do 
           begin
@@ -389,10 +389,10 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
           end
         end
       end
-#--}}}
+
     end
     def validlock?
-#--{{{
+
       if @max_age
         uncache @path rescue nil
         begin
@@ -404,10 +404,10 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         exist = File::exist?(@path)
         return(exist ? true : nil)
       end
-#--}}}
+
     end
     def uncache file 
-#--{{{
+
       refresh = nil
       begin
         is_a_file = File === file
@@ -423,10 +423,10 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         rescue Errno::ENOENT
         end
       end
-#--}}}
+
     end
     def create_tmplock
-#--{{{
+
       tmplock = tmpnam @dirname
       begin
         create(tmplock) do |f|
@@ -442,34 +442,34 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       ensure
         begin; File::unlink tmplock; rescue Errno::ENOENT; end if tmplock
       end
-#--}}}
+
     end
     def gen_lock_id
-#--{{{
+
       Hash[
         'host' => "#{ HOSTNAME }",
         'pid' => "#{ Process.pid }",
         'ppid' => "#{ Process.ppid }",
         'time' => timestamp, 
       ]
-#--}}}
+
     end
     def timestamp
-#--{{{
+
       time = Time.now
       usec = time.usec.to_s
       usec << '0' while usec.size < 6
       "#{ time.strftime('%Y-%m-%d %H:%M:%S') }.#{ usec }"
-#--}}}
+
     end
     def dump_lock_id lock_id = @lock_id
-#--{{{
+
       "host: %s\npid: %s\nppid: %s\ntime: %s\n" %
         lock_id.values_at('host','pid','ppid','time')
-#--}}}
+
     end
     def load_lock_id buf 
-#--{{{
+
       lock_id = {}
       kv = %r/([^:]+):(.*)/o
       buf.each do |line|
@@ -479,20 +479,20 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         lock_id[k.strip] = v.strip
       end
       lock_id
-#--}}}
+
     end
     def tmpnam dir, seed = File::basename($0)
-#--{{{
+
       pid = Process.pid
       time = Time.now
       sec = time.to_i
       usec = time.usec
       "%s%s.%s_%d_%s_%d_%d_%d.lck" % 
         [dir, File::SEPARATOR, HOSTNAME, pid, seed, sec, usec, rand(sec)]
-#--}}}
+
     end
     def create path
-#--{{{
+
       umask = nil 
       f = nil
       begin
@@ -502,36 +502,36 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         File::umask umask if umask
       end
       return(block_given? ? begin; yield f; ensure; f.close; end : f)
-#--}}}
+
     end
     def touch path 
-#--{{{
+
       FileUtils.touch path
-#--}}}
+
     end
     def getopt key, default = nil
-#--{{{
+
       [ key, key.to_s, key.to_s.intern ].each do |k|
         return @opts[k] if @opts.has_key?(k)
       end
       return default
-#--}}}
+
     end
     def to_str
-#--{{{
+
       @path
-#--}}}
+
     end
     alias to_s to_str
     def trace s = nil 
-#--{{{
+
       STDERR.puts((s ? s : yield)) if @debug
-#--}}}
+
     end
     def errmsg e
-#--{{{
+
       "%s (%s)\n%s\n" % [e.class, e.message, e.backtrace.join("\n")]
-#--}}}
+
     end
     def attempt
 #----{{{
@@ -551,13 +551,13 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       throw 'attempt', 'give_up'
 #----}}}
     end
-#--}}}
+
   end
 
   def Lockfile path, *a, &b
-#--{{{
+
     Lockfile.new(path, *a, &b)
-#--}}}
+
   end
 
   $__lockfile__ = __FILE__ 

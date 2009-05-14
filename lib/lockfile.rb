@@ -74,20 +74,20 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
     class << self
 
-      attr :retries, true
-      attr :max_age, true
-      attr :sleep_inc, true
-      attr :min_sleep, true
-      attr :max_sleep, true
-      attr :suspend, true
-      attr :timeout, true
-      attr :refresh, true
-      attr :debug, true
-      attr :dont_clean, true
-      attr :poll_retries, true
-      attr :poll_max_sleep, true
-      attr :dont_sweep, true
-      attr :dont_use_lock_id, true
+      attr_accessor :retries,
+                    :max_age,
+                    :sleep_inc,
+                    :min_sleep,
+                    :max_sleep,
+                    :suspend,
+                    :timeout,
+                    :refresh,
+                    :debug,
+                    :dont_clean,
+                    :poll_retries,
+                    :poll_max_sleep,
+                    :dont_sweep,
+                    :dont_use_lock_id
 
       def init
 
@@ -137,7 +137,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     attr :dont_sweep
     attr :dont_use_lock_id
 
-    attr :debug, true
+    attr_accessor :debug
 
     alias thief? thief
     alias locked? locked
@@ -232,16 +232,16 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
                       tmp_stat.rdev == lock_stat.rdev and tmp_stat.ino == lock_stat.ino 
                     trace{ "aquired lock <#{ @path }>" }
                     @locked = true
-                rescue => e
-                  i += 1
-                  unless i >= @poll_retries 
-                    t = [rand(@poll_max_sleep), @poll_max_sleep].min
-                    trace{ "poll sleep <#{ t }>..." }
-                    sleep t
-                    retry
+                  rescue => e
+                    i += 1
+                    unless i >= @poll_retries 
+                      t = [rand(@poll_max_sleep), @poll_max_sleep].min
+                      trace{ "poll sleep <#{ t }>..." }
+                      sleep t
+                      retry
+                    end
+                    raise
                   end
-                  raise
-                end
 
                 rescue => e
                   n_retries += 1

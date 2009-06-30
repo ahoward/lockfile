@@ -6,7 +6,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
   class Lockfile
 
-    VERSION = '1.4.4'
+    VERSION = '2.0.0'
     def Lockfile.version() Lockfile::VERSION end
     def version() Lockfile::VERSION end
 
@@ -20,13 +20,12 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     class UnLockError < LockError; end
 
     class SleepCycle < Array
-
       attr :min
       attr :max
       attr :range
       attr :inc
-      def initialize min, max, inc
 
+      def initialize(min, max, inc)
         @min, @max, @inc = Float(min), Float(max), Float(inc)
         @range = @max - @min
         raise RangeError, "max(#{ @max }) <= min(#{ @min })" if @max <= @min
@@ -37,24 +36,20 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         push(s) and s += @inc while(s <= @max)
         self[-1] = @max if self[-1] < @max
         reset
-
       end
-      def next
 
+      def next
         ret = self[@idx]
         @idx = ((@idx + 1) % self.size)
         ret
-
       end
+
       def reset
-
         @idx = 0
-
       end
-
     end
 
-    HOSTNAME = Socket::gethostname
+    HOSTNAME = Socket.gethostname
 
     DEFAULT_RETRIES          = nil    # maximum number of attempts
     DEFAULT_TIMEOUT          = nil    # the longest we will try
@@ -72,8 +67,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
     DEFAULT_DEBUG = ENV['LOCKFILE_DEBUG'] || false
 
-    class << self
-
+    class << Lockfile
       attr :retries, true
       attr :max_age, true
       attr :sleep_inc, true
@@ -90,7 +84,6 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       attr :dont_use_lock_id, true
 
       def init
-
         @retries          = DEFAULT_RETRIES
         @max_age          = DEFAULT_MAX_AGE
         @sleep_inc        = DEFAULT_SLEEP_INC
@@ -109,17 +102,17 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
         STDOUT.sync = true if @debug
         STDERR.sync = true if @debug
-
       end
-
     end
-    self.init
+
+    Lockfile.init
 
     attr :klass
     attr :path
     attr :opts
     attr :locked
     attr :thief
+    attr :refresher
     attr :dirname
     attr :basename
     attr :clean
@@ -143,8 +136,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     alias locked? locked
     alias debug? debug
 
-    def self::create(path, *a, &b)
-
+    def Lockfile.create(path, *a, &b)
       opts = {
         'retries' => 0,
         'min_sleep' => 0,
@@ -165,11 +157,9 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         raise Errno::EEXIST, path
       end
       open(path, *a, &b)
-
     end
 
     def initialize(path, opts = {}, &block)
-
       @klass = self.class
       @path  = path
       @opts  = opts
@@ -189,19 +179,19 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       @dont_use_lock_id = getopt 'dont_use_lock_id' , @klass.dont_use_lock_id
       @debug            = getopt 'debug'            , @klass.debug
 
-      @sleep_cycle = SleepCycle::new @min_sleep, @max_sleep, @sleep_inc 
+      @sleep_cycle = SleepCycle.new @min_sleep, @max_sleep, @sleep_inc 
 
-      @clean    = @dont_clean ? nil : lambda{ File::unlink @path rescue nil }
-      @dirname  = File::dirname @path
-      @basename = File::basename @path
+      @clean    = @dont_clean ? nil : lambda{ File.unlink @path rescue nil }
+      @dirname  = File.dirname @path
+      @basename = File.basename @path
       @thief    = false
       @locked   = false
+      @refrsher = nil
 
       lock(&block) if block
-
     end
-    def lock
 
+    def lock
       raise StackingLockError, "<#{ @path }> is locked!" if @locked
 
       sweep unless @dont_sweep
@@ -213,7 +203,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
           @sleep_cycle.reset
           create_tmplock do |f|
             begin
-              Timeout::timeout(@timeout) do
+              Timeout.timeout(@timeout) do
                 tmp_path = f.path
                 tmp_stat = f.lstat
                 n_retries = 0
@@ -223,11 +213,11 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
                   begin
                     trace{ "polling attempt <#{ i }>..." }
                     begin
-                      File::link tmp_path, @path
+                      File.link tmp_path, @path
                     rescue Errno::ENOENT
                       try_again!
                     end
-                    lock_stat = File::lstat @path
+                    lock_stat = File.lstat @path
                     raise StatLockError, "stat's do not agree" unless
                       tmp_stat.rdev == lock_stat.rdev and tmp_stat.ino == lock_stat.ino 
                     trace{ "aquired lock <#{ @path }>" }
@@ -257,7 +247,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
                     when false
                       trace{ "found invalid lock and removing" }
                       begin
-                        File::unlink @path
+                        File.unlink @path
                         @thief = true
                         warn "<#{ @path }> stolen by <#{ Process.pid }> at <#{ timestamp }>"
                         trace{ "i am a thief!" }
@@ -279,7 +269,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
           if block_given?
             stolen = false
-            refresher = (@refresh ? new_refresher : nil) 
+            @refresher = (@refresh ? new_refresher : nil) 
             begin
               begin
                 ret = yield @path
@@ -289,12 +279,14 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
               end
             ensure
               begin
-                refresher.kill if refresher and refresher.status
+                @refresher.kill if @refresher and @refresher.status
+                @refresher = nil
               ensure
                 unlock unless stolen
               end
             end
           else
+            @refresher = (@refresh ? new_refresher : nil)
             ObjectSpace.define_finalizer self, @clean if @clean
             ret = self
           end
@@ -304,16 +296,15 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       end
 
       return ret
-
     end
+
     def sweep
-#----{{{
       begin
-        glob = File::join(@dirname, ".*lck")
+        glob = File.join(@dirname, ".*lck")
         paths = Dir[glob]
         paths.each do |path|
           begin
-            basename = File::basename path
+            basename = File.basename path
             pat = %r/^\s*\.([^_]+)_([^_]+)/o
             if pat.match(basename)
               host, pid = $1, $2
@@ -328,7 +319,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
               unless alive?(pid)
                 trace{ "process <#{ pid }> on <#{ host }> is no longer alive" }
                 trace{ "sweeping <#{ path }>" }
-                FileUtils::rm_f path
+                FileUtils.rm_f path
               else
                 trace{ "process <#{ pid }> on <#{ host }> is still alive" }
                 trace{ "ignoring <#{ path }>" }
@@ -343,24 +334,26 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       rescue => e
         warn(errmsg(e))
       end
-#----}}}
     end
+
     def alive? pid
-#----{{{
       pid = Integer("#{ pid }")
       begin
-        Process::kill 0, pid
+        Process.kill 0, pid
         true
       rescue Errno::ESRCH
         false
       end
-#----}}}
     end
-    def unlock
 
+    def unlock
       raise UnLockError, "<#{ @path }> is not locked!" unless @locked
+
+      @refresher.kill if @refresher and @refresher.status
+      @refresher = nil
+
       begin
-        File::unlink @path
+        File.unlink @path
       rescue Errno::ENOENT
         raise StolenLockError, @path
       ensure
@@ -368,11 +361,10 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         @locked = false
         ObjectSpace.undefine_finalizer self if @clean
       end
-
     end
-    def new_refresher
 
-      Thread::new(Thread::current, @path, @refresh, @dont_use_lock_id) do |thread, path, refresh, dont_use_lock_id|
+    def new_refresher
+      Thread.new(Thread.current, @path, @refresh, @dont_use_lock_id) do |thread, path, refresh, dont_use_lock_id|
         loop do 
           begin
             touch path
@@ -386,48 +378,45 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
           rescue Exception => e
             trace{errmsg e}
             thread.raise StolenLockError
-            Thread::exit
+            Thread.exit
           end
         end
       end
-
     end
-    def validlock?
 
+    def validlock?
       if @max_age
         uncache @path rescue nil
         begin
-          return((Time.now - File::stat(@path).mtime) < @max_age)
+          return((Time.now - File.stat(@path).mtime) < @max_age)
         rescue Errno::ENOENT
           return nil 
         end
       else
-        exist = File::exist?(@path)
+        exist = File.exist?(@path)
         return(exist ? true : nil)
       end
-
     end
-    def uncache file 
 
+    def uncache file 
       refresh = nil
       begin
         is_a_file = File === file
         path = (is_a_file ? file.path : file.to_s) 
-        stat = (is_a_file ? file.stat : File::stat(file.to_s)) 
-        refresh = tmpnam(File::dirname(path))
-        File::link path, refresh
-        File::chmod stat.mode, path
-        File::utime stat.atime, stat.mtime, path
+        stat = (is_a_file ? file.stat : File.stat(file.to_s)) 
+        refresh = tmpnam(File.dirname(path))
+        File.link path, refresh
+        File.chmod stat.mode, path
+        File.utime stat.atime, stat.mtime, path
       ensure 
         begin
-          File::unlink refresh if refresh
+          File.unlink refresh if refresh
         rescue Errno::ENOENT
         end
       end
-
     end
-    def create_tmplock
 
+    def create_tmplock
       tmplock = tmpnam @dirname
       begin
         create(tmplock) do |f|
@@ -441,36 +430,32 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
           yield f
         end
       ensure
-        begin; File::unlink tmplock; rescue Errno::ENOENT; end if tmplock
+        begin; File.unlink tmplock; rescue Errno::ENOENT; end if tmplock
       end
-
     end
-    def gen_lock_id
 
+    def gen_lock_id
       Hash[
         'host' => "#{ HOSTNAME }",
         'pid' => "#{ Process.pid }",
         'ppid' => "#{ Process.ppid }",
         'time' => timestamp, 
       ]
-
     end
-    def timestamp
 
+    def timestamp
       time = Time.now
       usec = time.usec.to_s
       usec << '0' while usec.size < 6
       "#{ time.strftime('%Y-%m-%d %H:%M:%S') }.#{ usec }"
-
     end
-    def dump_lock_id lock_id = @lock_id
 
+    def dump_lock_id(lock_id = @lock_id)
       "host: %s\npid: %s\nppid: %s\ntime: %s\n" %
         lock_id.values_at('host','pid','ppid','time')
-
     end
-    def load_lock_id buf 
 
+    def load_lock_id(buf)
       lock_id = {}
       kv = %r/([^:]+):(.*)/o
       buf.each_line do |line|
@@ -480,85 +465,71 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
         lock_id[k.strip] = v.strip
       end
       lock_id
-
     end
-    def tmpnam dir, seed = File::basename($0)
 
+    def tmpnam(dir, seed = File.basename($0))
       pid = Process.pid
       time = Time.now
       sec = time.to_i
       usec = time.usec
       "%s%s.%s_%d_%s_%d_%d_%d.lck" % 
         [dir, File::SEPARATOR, HOSTNAME, pid, seed, sec, usec, rand(sec)]
-
     end
-    def create path
 
+    def create(path)
       umask = nil 
       f = nil
       begin
-        umask = File::umask 022
+        umask = File.umask 022
         f = open path, File::WRONLY|File::CREAT|File::EXCL, 0644
       ensure
-        File::umask umask if umask
+        File.umask umask if umask
       end
       return(block_given? ? begin; yield f; ensure; f.close; end : f)
-
     end
-    def touch path 
 
+    def touch(path)
       FileUtils.touch path
-
     end
-    def getopt key, default = nil
 
+    def getopt(key, default = nil)
       [ key, key.to_s, key.to_s.intern ].each do |k|
         return @opts[k] if @opts.has_key?(k)
       end
       return default
-
     end
+
     def to_str
-
       @path
-
     end
     alias to_s to_str
-    def trace s = nil 
 
+    def trace(s = nil)
       STDERR.puts((s ? s : yield)) if @debug
-
     end
-    def errmsg e
 
+    def errmsg(e)
       "%s (%s)\n%s\n" % [e.class, e.message, e.backtrace.join("\n")]
-
     end
+
     def attempt
-#----{{{
       ret = nil
       loop{ break unless catch('attempt'){ ret = yield } == 'try_again' }
       ret
-#----}}}
     end
+
     def try_again!
-#----{{{
       throw 'attempt', 'try_again'
-#----}}}
     end
     alias again! try_again!
-    def give_up!
-#----{{{
-      throw 'attempt', 'give_up'
-#----}}}
-    end
 
+    def give_up!
+      throw 'attempt', 'give_up'
+    end
   end
 
-  def Lockfile path, *a, &b
-
+  def Lockfile(path, *a, &b)
     Lockfile.new(path, *a, &b)
-
   end
 
   $__lockfile__ = __FILE__ 

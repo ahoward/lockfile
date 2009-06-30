@@ -1,42 +1,26 @@
-
-lib, version = $lib, $version
-
-require 'rubygems'
+## lockfile.gemspec
+#
 
 Gem::Specification::new do |spec|
-  $VERBOSE = nil
-  spec.name = lib 
-  spec.version = version 
+  spec.name = "lockfile"
+  spec.version = "2.0.0"
   spec.platform = Gem::Platform::RUBY
-  spec.summary = lib 
+  spec.summary = "lockfile"
 
-  spec.files = Dir::glob "**/**"
-  spec.executables = Dir::glob("bin/*").map{|exe| File::basename exe}
+  spec.files = ["bin", "bin/rlock", "doc", "doc/rlock.help", "lib", "lib/lockfile.rb", "rakefile", "readme.erb", "samples", "samples/a.rb", "samples/lock", "samples/lock.sh", "samples/lockfile", "samples/nfsstore.rb", "samples/out"]
+  spec.executables = ["rlock"]
   
-  spec.require_path = "lib" 
+  spec.require_path = "lib"
 
-  spec.has_rdoc = File::exist? "doc" 
-  spec.test_suite_file = "test/#{ lib }.rb" if File::directory? "test"
+  spec.has_rdoc = true
+  spec.test_files = nil
+  #spec.add_dependency 'lib', '>= version'
+  #spec.add_dependency 'fattr'
 
-  spec.extensions << "extconf.rb" if File::exists? "extconf.rb"
+  spec.extensions.push(*[])
 
+  spec.rubyforge_project = "codeforpeople"
   spec.author = "Ara T. Howard"
   spec.email = "ara.t.howard@gmail.com"
-  spec.homepage = "http://codeforpeople.com/lib/ruby/#{ lib }/"
-  spec.rubyforge_project = 'codeforpeople'
+  spec.homepage = "http://github.com/ahoward/lockfile/tree/master"
 end
-
-
-BEGIN {
-  $lib = 'lockfile'
-
-  $version = Dir.chdir(File.dirname(__FILE__)) do 
-    begin
-      $LOAD_PATH.unshift './lib'
-      require($lib)
-      Lockfile.version
-    ensure
-      $LOAD_PATH.shift
-    end
-  end
-}

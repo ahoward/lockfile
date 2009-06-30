@@ -158,6 +158,8 @@ BUGS
   bugno > 1 && bugno < 42
 
 HISTORY
+  2.0.0:
+    - lock fires up a refresher thread when called without a block
 
   1.4.3:
     - fixed a small non-critical bug in the require gaurd

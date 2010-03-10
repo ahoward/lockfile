@@ -191,6 +191,20 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       lock(&block) if block
     end
 
+    ##
+    # Executes the given block after acquiring the lock and
+    # ensures that the lock is relinquished afterwards.
+    #
+    def synchronize
+      raise ArgumentError, 'block must be given' unless block_given?
+      begin
+        lock
+        yield
+      ensure
+        unlock
+      end
+    end
+
     def lock
       raise StackingLockError, "<#{ @path }> is locked!" if @locked
 

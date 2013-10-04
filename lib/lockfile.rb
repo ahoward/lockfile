@@ -467,13 +467,13 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       lock_id
     end
 
-    def tmpnam(dir, seed = File.basename($0))
+    def tmpnam(dir)
       pid = Process.pid
       time = Time.now
       sec = time.to_i
       usec = time.usec
-      "%s%s.%s_%d_%s_%d_%d_%d.lck" % 
-        [dir, File::SEPARATOR, HOSTNAME, pid, seed, sec, usec, rand(sec)]
+      "%s%s.%s_%d_%d_%d_%d.lck" % 
+        [dir, File::SEPARATOR, HOSTNAME, pid, sec, usec, rand(sec)]
     end
 
     def create(path)

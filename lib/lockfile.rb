@@ -20,10 +20,10 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     class UnLockError < LockError; end
 
     class SleepCycle < Array
-      attr :min
-      attr :max
-      attr :range
-      attr :inc
+      attr_reader :min
+      attr_reader :max
+      attr_reader :range
+      attr_reader :inc
 
       def initialize(min, max, inc)
         @min, @max, @inc = Float(min), Float(max), Float(inc)
@@ -68,20 +68,20 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     DEFAULT_DEBUG = ENV['LOCKFILE_DEBUG'] || false
 
     class << Lockfile
-      attr :retries, true
-      attr :max_age, true
-      attr :sleep_inc, true
-      attr :min_sleep, true
-      attr :max_sleep, true
-      attr :suspend, true
-      attr :timeout, true
-      attr :refresh, true
-      attr :debug, true
-      attr :dont_clean, true
-      attr :poll_retries, true
-      attr :poll_max_sleep, true
-      attr :dont_sweep, true
-      attr :dont_use_lock_id, true
+      attr_accessor :retries
+      attr_accessor :max_age
+      attr_accessor :sleep_inc
+      attr_accessor :min_sleep
+      attr_accessor :max_sleep
+      attr_accessor :suspend
+      attr_accessor :timeout
+      attr_accessor :refresh
+      attr_accessor :debug
+      attr_accessor :dont_clean
+      attr_accessor :poll_retries
+      attr_accessor :poll_max_sleep
+      attr_accessor :dont_sweep
+      attr_accessor :dont_use_lock_id
 
       def init
         @retries          = DEFAULT_RETRIES
@@ -107,28 +107,28 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
     Lockfile.init
 
-    attr :klass
-    attr :path
-    attr :opts
-    attr :locked
-    attr :thief
-    attr :refresher
-    attr :dirname
-    attr :basename
-    attr :clean
-    attr :retries
-    attr :max_age
-    attr :sleep_inc
-    attr :min_sleep
-    attr :max_sleep
-    attr :suspend
-    attr :refresh
-    attr :timeout
-    attr :dont_clean
-    attr :poll_retries
-    attr :poll_max_sleep
-    attr :dont_sweep
-    attr :dont_use_lock_id
+    attr_reader :klass
+    attr_reader :path
+    attr_reader :opts
+    attr_reader :locked
+    attr_reader :thief
+    attr_reader :refresher
+    attr_reader :dirname
+    attr_reader :basename
+    attr_reader :clean
+    attr_reader :retries
+    attr_reader :max_age
+    attr_reader :sleep_inc
+    attr_reader :min_sleep
+    attr_reader :max_sleep
+    attr_reader :suspend
+    attr_reader :refresh
+    attr_reader :timeout
+    attr_reader :dont_clean
+    attr_reader :poll_retries
+    attr_reader :poll_max_sleep
+    attr_reader :dont_sweep
+    attr_reader :dont_use_lock_id
 
     attr_accessor :debug
 

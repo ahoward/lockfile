@@ -23,4 +23,5 @@ Gem::Specification::new do |spec|
   spec.author = "Ara T. Howard"
   spec.email = "ara.t.howard@gmail.com"
   spec.homepage = "http://github.com/ahoward/lockfile/tree/master"
+  spec.license = "Ruby"
 end

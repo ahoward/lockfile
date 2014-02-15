@@ -3,7 +3,7 @@
 
 Gem::Specification::new do |spec|
   spec.name = "lockfile"
-  spec.version = "2.0.1"
+  spec.version = "2.1.1"
   spec.platform = Gem::Platform::RUBY
   spec.summary = "lockfile"
   spec.description = "a ruby library for creating perfect and NFS safe lockfiles"

@@ -6,7 +6,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
   class Lockfile
 
-    VERSION = '2.0.1'
+    VERSION = '2.1.1'
     def Lockfile.version() Lockfile::VERSION end
     def version() Lockfile::VERSION end
 

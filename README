@@ -5,7 +5,7 @@ URLS
 
 SYNOPSIS
 
-  lib/lockfile.rb : a ruby library for creating NFS safe lockfiles
+  lib/lockfile.rb : a ruby library for creating perfect and NFS safe lockfiles
   
   bin/rlock : ruby command line tool which uses this library to create lockfiles
               and to run arbitrary commands while holding them. 

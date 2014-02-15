@@ -6,9 +6,13 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
   class Lockfile
 
-    VERSION = '2.0.0'
+    VERSION = '2.0.1'
     def Lockfile.version() Lockfile::VERSION end
     def version() Lockfile::VERSION end
+
+    def Lockfile.description
+      'a ruby library for creating perfect and NFS safe lockfiles'
+    end
 
     class LockError < StandardError; end
     class StolenLockError < LockError; end

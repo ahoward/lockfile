@@ -3,11 +3,11 @@
 
 Gem::Specification::new do |spec|
   spec.name = "lockfile"
-  spec.version = "2.1.2"
+  spec.version = "2.1.3"
   spec.platform = Gem::Platform::RUBY
   spec.summary = "lockfile"
   spec.description = "a ruby library for creating perfect and NFS safe lockfiles"
-  spec.license = "same as ruby's"
+  spec.license = "Ruby"
 
   spec.files =
 ["README",

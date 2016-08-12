@@ -236,7 +236,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
                       try_again!
                     end
                     lock_stat = File.lstat @path
-                    raise StatLockError, "stat's do not agree" unless
+                    raise StatLockError, "stats do not agree" unless
                       tmp_stat.rdev == lock_stat.rdev and tmp_stat.ino == lock_stat.ino 
                     trace{ "acquired lock <#{ @path }>" }
                     @locked = true
@@ -256,7 +256,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
                   trace{ "n_retries <#{ n_retries }>" }
                   case validlock?
                     when true
-                      raise MaxTriesLockError, "surpased retries <#{ @retries }>" if 
+                      raise MaxTriesLockError, "surpassed retries <#{ @retries }>" if 
                         @retries and n_retries >= @retries 
                       trace{ "found valid lock" }
                       sleeptime = @sleep_cycle.next 
@@ -274,7 +274,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
                       trace{ "suspending <#{ @suspend }>" }
                       sleep @suspend
                     when nil
-                      raise MaxTriesLockError, "surpased retries <#{ @retries }>" if 
+                      raise MaxTriesLockError, "surpassed retries <#{ @retries }>" if 
                         @retries and n_retries >= @retries 
                   end
                   retry

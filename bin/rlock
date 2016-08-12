@@ -186,7 +186,7 @@
             lockfile = ::Lockfile.new @lockpath, opts
             lockfile.lock
 
-            logger.debug{ "aquired lock <#{ @lockpath }>" }
+            logger.debug{ "acquired lock <#{ @lockpath }>" }
           else
             logger.debug{ "opts <#{ opts.inspect }>" }
             logger.debug{ "aquiring lock <#{ @lockpath }>..." }
@@ -198,7 +198,7 @@
             lockfile = ::Lockfile.new @lockpath, opts
 
             lockfile.lock do
-              logger.debug{ "aquired lock <#{ @lockpath }>" }
+              logger.debug{ "acquired lock <#{ @lockpath }>" }
               logger.debug{ "cmd <#{ @argv.join ' ' }>" }
               v = nil
               begin

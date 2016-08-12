@@ -238,7 +238,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
                     lock_stat = File.lstat @path
                     raise StatLockError, "stat's do not agree" unless
                       tmp_stat.rdev == lock_stat.rdev and tmp_stat.ino == lock_stat.ino 
-                    trace{ "aquired lock <#{ @path }>" }
+                    trace{ "acquired lock <#{ @path }>" }
                     @locked = true
                   rescue => e
                     i += 1

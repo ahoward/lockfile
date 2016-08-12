@@ -59,7 +59,7 @@ BASIC USAGE
 
     opts = {                    # the keys can be symbols or strings
 
-      :retries        => nil,   # we will try forever to aquire the lock
+      :retries        => nil,   # we will try forever to acquire the lock
 
       :sleep_inc      => 2,     # we will sleep 2 seconds longer than the
                                 # previous sleep after each retry, cycling from

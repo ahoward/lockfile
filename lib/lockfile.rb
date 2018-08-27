@@ -299,8 +299,12 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
               end
             ensure
               begin
-                @semaphore.synchronize do
-                  @refresher.kill 
+                begin
+                  @semaphore.synchronize do
+                    @refresher.kill 
+                  end 
+                rescue
+                    @refresher.kill 
                 end if @refresher and @refresher.status
                 @refresher = nil
               ensure
@@ -371,7 +375,11 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     def unlock
       raise UnLockError, "<#{ @path }> is not locked!" unless @locked
 
-      @semaphore.synchronize do
+      begin
+        @semaphore.synchronize do
+          @refresher.kill 
+        end 
+      rescue
         @refresher.kill 
       end if @refresher and @refresher.status
 

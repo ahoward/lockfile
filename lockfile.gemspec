@@ -3,7 +3,7 @@
 
 Gem::Specification::new do |spec|
   spec.name = "lockfile"
-  spec.version = "2.1.3"
+  spec.version = "2.1.5"
   spec.platform = Gem::Platform::RUBY
   spec.summary = "lockfile"
   spec.description = "a ruby library for creating perfect and NFS safe lockfiles"
@@ -39,7 +39,7 @@ Gem::Specification::new do |spec|
   spec.extensions.push(*[])
 
   spec.rubyforge_project = "codeforpeople"
-  spec.author = "Ara T. Howard"
+  spec.author = "Ara T. Howard - Modified by Miguel Vazquez"
   spec.email = "ara.t.howard@gmail.com"
   spec.homepage = "https://github.com/ahoward/lockfile"
 end

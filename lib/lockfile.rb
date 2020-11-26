@@ -163,6 +163,14 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       open(path, *a, &b)
     end
 
+    def self.finalizer_proc(file)
+      lambda do
+        File.unlink file
+      rescue
+        nil
+      end
+    end
+
     def initialize(path, opts = {}, &block)
       @klass = self.class
       @path  = path
@@ -187,7 +195,8 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
       @sleep_cycle = SleepCycle.new @min_sleep, @max_sleep, @sleep_inc 
 
-      @clean    = @dont_clean ? nil : lambda{ File.unlink @path rescue nil }
+      @clean    = @dont_clean ? nil : Lockfile.finalizer_proc(@path)
+
       @dirname  = File.dirname @path
       @basename = File.basename @path
       @thief    = false

@@ -185,12 +185,12 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
       @sleep_cycle = SleepCycle.new @min_sleep, @max_sleep, @sleep_inc 
 
-      @clean    = @dont_clean ? nil : lambda{ File.unlink @path rescue nil }
-      @dirname  = File.dirname @path
-      @basename = File.basename @path
-      @thief    = false
-      @locked   = false
-      @refrsher = nil
+      @clean     = @dont_clean ? nil : lambda{ File.unlink @path rescue nil }
+      @dirname   = File.dirname @path
+      @basename  = File.basename @path
+      @thief     = false
+      @locked    = false
+      @refresher = nil
 
       lock(&block) if block
     end

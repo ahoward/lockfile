@@ -6,7 +6,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
   class Lockfile
 
-    VERSION = '2.1.3'
+    VERSION = '2.1.7'
     def Lockfile.version() Lockfile::VERSION end
     def version() Lockfile::VERSION end
 
@@ -164,7 +164,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     end
 
     def self.finalizer_proc(file)
-      lambda do
+      lambda do |id|
         File.unlink file
       rescue
         nil

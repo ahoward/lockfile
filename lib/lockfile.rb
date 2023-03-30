@@ -164,8 +164,9 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     end
 
     def self.finalizer_proc(file)
+      pid = Process.pid
       lambda do |id|
-        File.unlink file
+        File.unlink file if Process.pid == pid
       rescue
         nil
       end
@@ -395,7 +396,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       @refresher = nil
 
       begin
-        File.unlink @path
+        File.unlink @path 
       rescue Errno::ENOENT
         raise StolenLockError, @path
       ensure

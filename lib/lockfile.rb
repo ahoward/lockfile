@@ -6,7 +6,7 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
 
   class Lockfile
 
-    VERSION = '2.1.3'
+    VERSION = '2.1.8'
     def Lockfile.version() Lockfile::VERSION end
     def version() Lockfile::VERSION end
 
@@ -163,6 +163,15 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       open(path, *a, &b)
     end
 
+    def self.finalizer_proc(file)
+      pid = Process.pid
+      lambda do |id|
+        File.unlink file if Process.pid == pid
+      rescue
+        nil
+      end
+    end
+
     def initialize(path, opts = {}, &block)
       @klass = self.class
       @path  = path
@@ -183,9 +192,12 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
       @dont_use_lock_id = getopt 'dont_use_lock_id' , @klass.dont_use_lock_id
       @debug            = getopt 'debug'            , @klass.debug
 
+      @semaphore = Mutex.new
+
       @sleep_cycle = SleepCycle.new @min_sleep, @max_sleep, @sleep_inc 
 
-      @clean    = @dont_clean ? nil : lambda{ File.unlink @path rescue nil }
+      @clean    = @dont_clean ? nil : Lockfile.finalizer_proc(@path)
+
       @dirname  = File.dirname @path
       @basename = File.basename @path
       @thief    = false
@@ -297,7 +309,13 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
               end
             ensure
               begin
-                @refresher.kill if @refresher and @refresher.status
+                begin
+                  @semaphore.synchronize do
+                    @refresher.kill 
+                  end 
+                rescue
+                    @refresher.kill 
+                end if @refresher and @refresher.status
                 @refresher = nil
               ensure
                 unlock unless stolen
@@ -367,11 +385,18 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
     def unlock
       raise UnLockError, "<#{ @path }> is not locked!" unless @locked
 
-      @refresher.kill if @refresher and @refresher.status
+      begin
+        @semaphore.synchronize do
+          @refresher.kill 
+        end 
+      rescue
+        @refresher.kill 
+      end if @refresher and @refresher.status
+
       @refresher = nil
 
       begin
-        File.unlink @path
+        File.unlink @path 
       rescue Errno::ENOENT
         raise StolenLockError, @path
       ensure
@@ -388,7 +413,11 @@ unless(defined?($__lockfile__) or defined?(Lockfile))
             touch path
             trace{"touched <#{ path }> @ <#{ Time.now.to_f }>"}
             unless dont_use_lock_id
-              loaded = load_lock_id(IO.read(path))
+              txt = nil
+              @semaphore.synchronize do
+                txt = IO.read(path)
+              end
+              loaded = load_lock_id(txt)
               trace{"loaded <\n#{ loaded.inspect }\n>"}
               raise unless loaded == @lock_id 
             end
